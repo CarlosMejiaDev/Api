@@ -28,8 +28,35 @@ class Member {
         .input('MembresiaAsignada', sql.Int, member.MembresiaAsignada)
         .input('FechaFinalizacion', sql.DateTime, endDate)
         .query('INSERT INTO members (Nombre, Email, Celular, MembresiaAsignada, FechaFinalizacion) VALUES (@Nombre, @Email, @Celular, @MembresiaAsignada, @FechaFinalizacion)');
-      
-      return result.recordset;
+      return result.rowsAffected;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async delete(id) {
+    try {
+      const pool = await sql.connect();
+      const result = await pool.request()
+        .input('Id', sql.Int, id)
+        .query('DELETE FROM members WHERE Id = @Id');
+      return result.rowsAffected;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async update(id, member) {
+    try {
+      const pool = await sql.connect();
+      const result = await pool.request()
+        .input('Id', sql.Int, id)
+        .input('Nombre', sql.VarChar(255), member.Nombre)
+        .input('Email', sql.VarChar(255), member.Email)
+        .input('Celular', sql.VarChar(20), member.Celular)
+        .input('MembresiaAsignada', sql.Int, member.MembresiaAsignada)
+        .query('UPDATE members SET Nombre = @Nombre, Email = @Email, Celular = @Celular, MembresiaAsignada = @MembresiaAsignada WHERE Id = @Id');
+      return result.rowsAffected;
     } catch (err) {
       throw err;
     }
