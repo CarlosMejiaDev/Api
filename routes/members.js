@@ -1,58 +1,43 @@
-// models/membership.js
+// routes/member.js
 
-const sql = require('mssql');
+const express = require('express');
+const router = express.Router();
+const Member = require('../models/member');
 
-class Membership {
-  static async getAll() {
-    try {
-      const pool = await sql.connect();
-      const result = await pool.request().query('SELECT * FROM memberships');
-      return result.recordset;
-    } catch (err) {
-      throw err;
-    }
+router.get('/', async (req, res) => {
+  try {
+    const members = await Member.getAll();
+    res.json(members);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  static async create(membership) {
-    try {
-      const pool = await sql.connect();
-      const result = await pool.request()
-        .input('Titulo', sql.VarChar(255), membership.Titulo)
-        .input('Descripcion', sql.Text, membership.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .query('INSERT INTO memberships (Titulo, Descripcion, Precio) VALUES (@Titulo, @Descripcion, @Precio)');
-      return result.recordset;
-    } catch (err) {
-      throw err;
-    }
+router.post('/', async (req, res) => {
+  try {
+    const newMember = await Member.create(req.body);
+    res.status(201).json(newMember);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
+});
 
-  static async delete(id) {
-    try {
-      const pool = await sql.connect();
-      const result = await pool.request()
-        .input('Id', sql.Int, id)
-        .query('DELETE FROM memberships WHERE Id = @Id');
-      return result.rowsAffected;
-    } catch (err) {
-      throw err;
-    }
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedMember = await Member.delete(req.params.id);
+    res.json(deletedMember);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+});
 
-  static async update(id, membership) {
-    try {
-      const pool = await sql.connect();
-      const result = await pool.request()
-        .input('Id', sql.Int, id)
-        .input('Titulo', sql.VarChar(255), membership.Titulo)
-        .input('Descripcion', sql.Text, membership.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .query('UPDATE memberships SET Titulo = @Titulo, Descripcion = @Descripcion, Precio = @Precio WHERE Id = @Id');
-      return result.rowsAffected;
-    } catch (err) {
-      throw err;
-    }
+router.put('/:id', async (req, res) => {
+  try {
+    const updatedMember = await Member.update(req.params.id, req.body);
+    res.json(updatedMember);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
-}
+});
 
-module.exports = Membership;
+module.exports = router;
