@@ -5,8 +5,7 @@ const productsRoutes = require('./routes/products');
 const salesHistoryRoutes = require('./routes/sales_history');
 const membershipRoutes = require('./routes/memberships');
 const memberRoutes = require('./routes/members');
-
-
+const cors = require('cors'); // Requiere cors
 
 const config = {
     user: 'administrador_carlos',
@@ -27,6 +26,8 @@ sql.connect(config).then(() => {
 
 const app = express();
 
+app.use(cors()); // Usa cors como middleware
+
 // Middleware para parsear el cuerpo de las solicitudes HTTP en formato JSON
 app.use(express.json());
 
@@ -37,11 +38,8 @@ app.use('/sales_history', salesHistoryRoutes);
 app.use('/memberships', membershipRoutes);
 app.use('/members', memberRoutes);
 
-
-
 // Inicia el servidor
 const port = 3000;
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
 });
-
