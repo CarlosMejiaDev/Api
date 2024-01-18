@@ -6,7 +6,8 @@ const Member = require('../models/member');
 
 router.get('/', async (req, res) => {
   try {
-    const members = await Member.getAll();
+    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const members = await Member.getAll(token);
     res.json(members);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -15,7 +16,8 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const newMember = await Member.create(req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const newMember = await Member.create(req.body, token);
     res.status(201).json(newMember);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -24,7 +26,8 @@ router.post('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedMember = await Member.delete(req.params.id);
+    const token = req.headers.authorization.split(' ')[1];
+    const deletedMember = await Member.delete(req.params.id, token);
     res.json(deletedMember);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -33,7 +36,8 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const updatedMember = await Member.update(req.params.id, req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const updatedMember = await Member.update(req.params.id, req.body, token);
     res.json(updatedMember);
   } catch (err) {
     res.status(400).json({ message: err.message });

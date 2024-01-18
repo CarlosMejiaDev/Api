@@ -1,21 +1,28 @@
 // models/product.js
 
 const sql = require('mssql');
+const jwt = require('jsonwebtoken');
 
 class Product {
-  static async getAll() {
+  static async getAll(token) {
     try {
       const pool = await sql.connect();
-      const result = await pool.request().query('SELECT * FROM products');
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
+      const result = await pool.request()
+        .input('UserID', sql.Int, userID)
+        .query('SELECT * FROM products WHERE UserID = @UserID');
       return result.recordset;
     } catch (err) {
       throw err;
     }
   }
 
-  static async create(product) {
+  static async create(product, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('Nombre', sql.VarChar(255), product.Nombre)
         .input('Descripcion', sql.Text, product.Descripcion)
@@ -23,28 +30,34 @@ class Product {
         .input('Cantidad', sql.Int, product.Cantidad)
         .input('Categoria', sql.VarChar(50), product.Categoria)
         .input('ProveedorID', sql.Int, product.ProveedorID)
-        .query('INSERT INTO products (Nombre, Descripcion, Precio, Cantidad, Categoria, ProveedorID) VALUES (@Nombre, @Descripcion, @Precio, @Cantidad, @Categoria, @ProveedorID)');
+        .input('UserID', sql.Int, userID)
+        .query('INSERT INTO products (Nombre, Descripcion, Precio, Cantidad, Categoria, ProveedorID, UserID) VALUES (@Nombre, @Descripcion, @Precio, @Cantidad, @Categoria, @ProveedorID, @UserID)');
       return result.recordset;
     } catch (err) {
       throw err;
     }
   }
 
-  static async delete(id) {
+  static async delete(id, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('ID', sql.Int, id)
-        .query('DELETE FROM products WHERE ID = @ID');
+        .input('UserID', sql.Int, userID)
+        .query('DELETE FROM products WHERE ID = @ID AND UserID = @UserID');
       return result.rowsAffected;
     } catch (err) {
       throw err;
     }
   }
 
-  static async update(id, product) {
+  static async update(id, product, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('ID', sql.Int, id)
         .input('Nombre', sql.VarChar(255), product.Nombre)
@@ -53,20 +66,24 @@ class Product {
         .input('Cantidad', sql.Int, product.Cantidad)
         .input('Categoria', sql.VarChar(50), product.Categoria)
         .input('ProveedorID', sql.Int, product.ProveedorID)
-        .query('UPDATE products SET Nombre = @Nombre, Descripcion = @Descripcion, Precio = @Precio, Cantidad = @Cantidad, Categoria = @Categoria, ProveedorID = @ProveedorID WHERE ID = @ID');
+        .input('UserID', sql.Int, userID)
+        .query('UPDATE products SET Nombre = @Nombre, Descripcion = @Descripcion, Precio = @Precio, Cantidad = @Cantidad, Categoria = @Categoria, ProveedorID = @ProveedorID WHERE ID = @ID AND UserID = @UserID');
       return result.rowsAffected;
     } catch (err) {
       throw err;
     }
   }
 
-  static async decreaseQuantity(id, quantity) {
+  static async decreaseQuantity(id, quantity, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('id', sql.Int, id)
         .input('quantity', sql.Int, quantity)
-        .query('UPDATE products SET Cantidad = Cantidad - @quantity WHERE ID = @id');
+        .input('UserID', sql.Int, userID)
+        .query('UPDATE products SET Cantidad = Cantidad - @quantity WHERE ID = @id AND UserID = @UserID');
       return result.rowsAffected[0];
     } catch (err) {
       throw err;

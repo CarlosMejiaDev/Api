@@ -1,53 +1,67 @@
 // models/membership.js
 
 const sql = require('mssql');
+const jwt = require('jsonwebtoken');
 
 class Membership {
-  static async getAll() {
+  static async getAll(token) {
     try {
       const pool = await sql.connect();
-      const result = await pool.request().query('SELECT * FROM memberships');
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
+      const result = await pool.request()
+        .input('UserID', sql.Int, userID)
+        .query('SELECT * FROM memberships WHERE UserID = @UserID');
       return result.recordset;
     } catch (err) {
       throw err;
     }
   }
 
-  static async create(membership) {
+  static async create(membership, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('Titulo', sql.VarChar(255), membership.Titulo)
         .input('Descripcion', sql.Text, membership.Descripcion)
         .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .query('INSERT INTO memberships (Titulo, Descripcion, Precio) VALUES (@Titulo, @Descripcion, @Precio)');
+        .input('UserID', sql.Int, userID)
+        .query('INSERT INTO memberships (Titulo, Descripcion, Precio, UserID) VALUES (@Titulo, @Descripcion, @Precio, @UserID)');
       return result.recordset;
     } catch (err) {
       throw err;
     }
   }
 
-  static async delete(id) {
+  static async delete(id, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('Id', sql.Int, id)
-        .query('DELETE FROM memberships WHERE Id = @Id');
+        .input('UserID', sql.Int, userID)
+        .query('DELETE FROM memberships WHERE Id = @Id AND UserID = @UserID');
       return result.rowsAffected;
     } catch (err) {
       throw err;
     }
   }
 
-  static async update(id, membership) {
+  static async update(id, membership, token) {
     try {
       const pool = await sql.connect();
+      const decoded = jwt.verify(token, 'tu_secreto_jwt');
+      const userID = decoded.id;
       const result = await pool.request()
         .input('Id', sql.Int, id)
         .input('Titulo', sql.VarChar(255), membership.Titulo)
         .input('Descripcion', sql.Text, membership.Descripcion)
         .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .query('UPDATE memberships SET Titulo = @Titulo, Descripcion = @Descripcion, Precio = @Precio WHERE Id = @Id');
+        .input('UserID', sql.Int, userID)
+        .query('UPDATE memberships SET Titulo = @Titulo, Descripcion = @Descripcion, Precio = @Precio WHERE Id = @Id AND UserID = @UserID');
       return result.rowsAffected;
     } catch (err) {
       throw err;

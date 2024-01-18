@@ -7,7 +7,8 @@ const Provider = require('../models/provider');
 // GET route to get all providers
 router.get('/', async (req, res) => {
   try {
-    const providers = await Provider.getAll();
+    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const providers = await Provider.getAll(token);
     res.json(providers);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -17,7 +18,8 @@ router.get('/', async (req, res) => {
 // POST route to create a new provider
 router.post('/', async (req, res) => {
   try {
-    const newProvider = await Provider.create(req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const newProvider = await Provider.create(req.body, token);
     res.status(201).json(newProvider);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -27,7 +29,8 @@ router.post('/', async (req, res) => {
 // DELETE route to delete a provider
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedProvider = await Provider.delete(req.params.id);
+    const token = req.headers.authorization.split(' ')[1];
+    const deletedProvider = await Provider.delete(req.params.id, token);
     if (deletedProvider === 0) {
       return res.status(404).json({ message: 'Provider not found' });
     }
@@ -40,7 +43,8 @@ router.delete('/:id', async (req, res) => {
 // PUT route to update a provider
 router.put('/:id', async (req, res) => {
   try {
-    const updatedProvider = await Provider.update(req.params.id, req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const updatedProvider = await Provider.update(req.params.id, req.body, token);
     if (updatedProvider === 0) {
       return res.status(404).json({ message: 'Provider not found' });
     }

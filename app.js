@@ -5,7 +5,9 @@ const productsRoutes = require('./routes/products');
 const salesHistoryRoutes = require('./routes/sales_history');
 const membershipRoutes = require('./routes/memberships');
 const memberRoutes = require('./routes/members');
-const cors = require('cors'); // Requiere cors
+const authRoutes = require('./routes/auth');
+const { expressjwt: expressJwt } = require('express-jwt');
+const cors = require('cors');
 
 const config = {
     user: 'administrador_carlos',
@@ -13,8 +15,8 @@ const config = {
     server: 'flowfit.mssql.somee.com', 
     database: 'flowfit',
     options: {
-        encrypt: true,  // Si está usando encryptación
-        trustServerCertificate: true  // Desactivar la verificación del certificado
+        encrypt: true,
+        trustServerCertificate: true
     }
 };
 
@@ -26,19 +28,24 @@ sql.connect(config).then(() => {
 
 const app = express();
 
-app.use(cors()); // Usa cors como middleware
-
-// Middleware para parsear el cuerpo de las solicitudes HTTP en formato JSON
+app.use(cors());
 app.use(express.json());
 
-// Monta las rutas
+// Utiliza el módulo expressJwt de express-jwt
+app.use(expressJwt({
+    secret: 'tu_secreto_jwt',
+    algorithms: ['HS256']
+}).unless({
+    path: ['/auth/login', '/auth/register']
+}));
+
 app.use('/providers', providersRoutes);
 app.use('/products', productsRoutes);
 app.use('/sales_history', salesHistoryRoutes);
 app.use('/memberships', membershipRoutes);
 app.use('/members', memberRoutes);
+app.use('/auth', authRoutes);
 
-// Inicia el servidor
 const port = 3000;
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

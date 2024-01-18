@@ -8,7 +8,8 @@ const Product = require('../models/product');
 // GET route to get all sales
 router.get('/', async (req, res) => {
   try {
-    const sales = await SalesHistory.getAll();
+    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const sales = await SalesHistory.getAll(token);
     res.json(sales);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -18,8 +19,9 @@ router.get('/', async (req, res) => {
 // POST route to create a new sale
 router.post('/', async (req, res) => {
   try {
-    const newSale = await SalesHistory.create(req.body);
-    await Product.decreaseQuantity(req.body.ID_Producto, req.body.Cantidad);
+    const token = req.headers.authorization.split(' ')[1];
+    const newSale = await SalesHistory.create(req.body, token);
+    await Product.decreaseQuantity(req.body.ID_Producto, req.body.Cantidad, token);
     res.status(201).json(newSale);
   } catch (err) {
     res.status(400).json({ message: err.message });

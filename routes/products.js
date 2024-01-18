@@ -7,7 +7,8 @@ const Product = require('../models/product');
 // GET route to get all products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.getAll();
+    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const products = await Product.getAll(token);
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -17,7 +18,8 @@ router.get('/', async (req, res) => {
 // POST route to create a new product
 router.post('/', async (req, res) => {
   try {
-    const newProduct = await Product.create(req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const newProduct = await Product.create(req.body, token);
     res.status(201).json(newProduct);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -27,7 +29,8 @@ router.post('/', async (req, res) => {
 // DELETE route to delete a product
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedProduct = await Product.delete(req.params.id);
+    const token = req.headers.authorization.split(' ')[1];
+    const deletedProduct = await Product.delete(req.params.id, token);
     if (deletedProduct === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -40,7 +43,8 @@ router.delete('/:id', async (req, res) => {
 // PUT route to update a product
 router.put('/:id', async (req, res) => {
   try {
-    const updatedProduct = await Product.update(req.params.id, req.body);
+    const token = req.headers.authorization.split(' ')[1];
+    const updatedProduct = await Product.update(req.params.id, req.body, token);
     if (updatedProduct === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -53,8 +57,9 @@ router.put('/:id', async (req, res) => {
 // POST route to sell a product
 router.post('/:id/sell', async (req, res) => {
   try {
+    const token = req.headers.authorization.split(' ')[1];
     const quantity = req.body.quantity;
-    const soldProduct = await Product.sell(req.params.id, quantity);
+    const soldProduct = await Product.sell(req.params.id, quantity, token);
     if (soldProduct === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -67,8 +72,9 @@ router.post('/:id/sell', async (req, res) => {
 // POST route to restock a product
 router.post('/:id/restock', async (req, res) => {
   try {
+    const token = req.headers.authorization.split(' ')[1];
     const quantity = req.body.quantity;
-    const restockedProduct = await Product.restock(req.params.id, quantity);
+    const restockedProduct = await Product.restock(req.params.id, quantity, token);
     if (restockedProduct === 0) {
       return res.status(404).json({ message: 'Product not found' });
     }
