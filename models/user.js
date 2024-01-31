@@ -1,24 +1,23 @@
 // models/user.js
 
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const config = require('../dbconfig'); // Importa la configuración de la base de datos
 
 class User {
   static async findByUsername(username) {
     try {
-      const pool = await sql.connect();
-      const result = await pool.request()
-        .input('Username', sql.NVarChar, username)
-        .query('SELECT * FROM users WHERE username = @Username');
-      return result.recordset[0]; // Asegúrate de que esto incluye la propiedad 'id'
+      const connection = await mysql.createConnection(config);
+      const [rows] = await connection.execute('SELECT * FROM users WHERE username = ?', [username]);
+      return rows[0]; // Asegúrate de que esto incluye la propiedad 'id'
     } catch (err) {
       throw err;
     }
   }
 
   static async generateAuthToken(user) {
-    const token = jwt.sign({ id: user.ID }, 'tu_secreto_jwt', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, 'tu_secreto_jwt', { expiresIn: '1h' });
     return token;
   }
 }

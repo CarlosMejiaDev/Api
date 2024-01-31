@@ -1,13 +1,12 @@
-// routes/products.js
-
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
-// GET route to get all products
 router.get('/', async (req, res) => {
   try {
-    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const token = req.headers.authorization.split(' ')[1];
     const products = await Product.getAll(token);
     res.json(products);
   } catch (err) {
@@ -15,18 +14,21 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST route to create a new product
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image_path'), async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
-    const newProduct = await Product.create(req.body, token);
+    const productData = req.body;
+    productData.image_path = {
+      name: req.file.originalname,
+      data: req.file.buffer
+    };
+    const newProduct = await Product.create(productData, token);
     res.status(201).json(newProduct);
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: err.message });
   }
 });
-
-// DELETE route to delete a product
 router.delete('/:id', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -40,7 +42,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// PUT route to update a product
 router.put('/:id', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -54,7 +55,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// POST route to sell a product
 router.post('/:id/sell', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -69,7 +69,6 @@ router.post('/:id/sell', async (req, res) => {
   }
 });
 
-// POST route to restock a product
 router.post('/:id/restock', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];

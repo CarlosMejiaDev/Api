@@ -1,13 +1,12 @@
-// routes/providers.js
-
 const express = require('express');
 const router = express.Router();
 const Provider = require('../models/provider');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
-// GET route to get all providers
 router.get('/', async (req, res) => {
   try {
-    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const token = req.headers.authorization.split(' ')[1];
     const providers = await Provider.getAll(token);
     res.json(providers);
   } catch (err) {
@@ -15,18 +14,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST route to create a new provider
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image_path'), async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
-    const newProvider = await Provider.create(req.body, token);
+    const providerData = req.body;
+    providerData.image_path = {
+      name: req.file.originalname,
+      data: req.file.buffer
+    };
+    const newProvider = await Provider.create(providerData, token);
     res.status(201).json(newProvider);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// DELETE route to delete a provider
+
 router.delete('/:id', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
@@ -40,7 +43,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// PUT route to update a provider
 router.put('/:id', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];

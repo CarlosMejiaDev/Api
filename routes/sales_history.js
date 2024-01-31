@@ -5,10 +5,9 @@ const router = express.Router();
 const SalesHistory = require('../models/sales_history');
 const Product = require('../models/product');
 
-// GET route to get all sales
 router.get('/', async (req, res) => {
   try {
-    const token = req.headers.authorization.split(' ')[1]; // asumimos que el token se pasa en el encabezado de autorización como 'Bearer your_token'
+    const token = req.headers.authorization.split(' ')[1];
     const sales = await SalesHistory.getAll(token);
     res.json(sales);
   } catch (err) {
@@ -16,7 +15,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST route to create a new sale
 router.post('/', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];

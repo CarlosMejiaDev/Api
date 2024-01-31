@@ -1,18 +1,32 @@
 // models/product.js
 
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const config = require('../dbconfig');
+const admin = require('firebase-admin');
+
+// Configura tus credenciales de Firebase
+var serviceAccount = require("../keyStorage.json");
+
+let bucket;
+if (admin.apps.length) {
+    bucket = admin.storage().bucket();
+} else {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: "flowfitimagenes.appspot.com"
+    });
+    bucket = admin.storage().bucket();
+}
 
 class Product {
   static async getAll(token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('UserID', sql.Int, userID)
-        .query('SELECT * FROM products WHERE UserID = @UserID');
-      return result.recordset;
+      const [rows] = await connection.execute('SELECT * FROM products WHERE user_id = ?', [userID]);
+      return rows;
     } catch (err) {
       throw err;
     }
@@ -20,34 +34,35 @@ class Product {
 
   static async create(product, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('Nombre', sql.VarChar(255), product.Nombre)
-        .input('Descripcion', sql.Text, product.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), product.Precio)
-        .input('Cantidad', sql.Int, product.Cantidad)
-        .input('Categoria', sql.VarChar(50), product.Categoria)
-        .input('ProveedorID', sql.Int, product.ProveedorID)
-        .input('UserID', sql.Int, userID)
-        .query('INSERT INTO products (Nombre, Descripcion, Precio, Cantidad, Categoria, ProveedorID, UserID) VALUES (@Nombre, @Descripcion, @Precio, @Cantidad, @Categoria, @ProveedorID, @UserID)');
-      return result.recordset;
+  
+      // Check if product.image_path and product.image_path.name are defined
+      if (!product.image_path || !product.image_path.name) {
+        throw new Error('product.image_path is undefined or does not have a name');
+      }
+  
+      // Sube la imagen al Firebase Storage
+      const file = bucket.file(`product_images/${product.image_path.name}`);
+      await file.save(product.image_path.data);
+  
+      // Guarda la URL de la imagen en la base de datos
+      product.image_path = `https://firebasestorage.googleapis.com/v0/b/flowfitimagenes.appspot.com/o/${encodeURIComponent(file.name)}?alt=media`;
+  
+      const [result] = await connection.execute('INSERT INTO products (name, description, price, quantity, category_id, provider_id, user_id, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [product.name, product.description, product.price, product.quantity, product.category_id, product.provider_id, userID, product.image_path]);
+      return result;
     } catch (err) {
       throw err;
     }
   }
-
   static async delete(id, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('ID', sql.Int, id)
-        .input('UserID', sql.Int, userID)
-        .query('DELETE FROM products WHERE ID = @ID AND UserID = @UserID');
-      return result.rowsAffected;
+      const [result] = await connection.execute('DELETE FROM products WHERE id = ? AND user_id = ?', [id, userID]);
+      return result.affectedRows;
     } catch (err) {
       throw err;
     }
@@ -55,20 +70,11 @@ class Product {
 
   static async update(id, product, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('ID', sql.Int, id)
-        .input('Nombre', sql.VarChar(255), product.Nombre)
-        .input('Descripcion', sql.Text, product.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), product.Precio)
-        .input('Cantidad', sql.Int, product.Cantidad)
-        .input('Categoria', sql.VarChar(50), product.Categoria)
-        .input('ProveedorID', sql.Int, product.ProveedorID)
-        .input('UserID', sql.Int, userID)
-        .query('UPDATE products SET Nombre = @Nombre, Descripcion = @Descripcion, Precio = @Precio, Cantidad = @Cantidad, Categoria = @Categoria, ProveedorID = @ProveedorID WHERE ID = @ID AND UserID = @UserID');
-      return result.rowsAffected;
+      const [result] = await connection.execute('UPDATE products SET name = ?, description = ?, price = ?, quantity = ?, category_id = ?, provider_id = ?, image_path = ? WHERE id = ? AND user_id = ?', [product.name, product.description, product.price, product.quantity, product.category_id, product.provider_id, product.image_path, id, userID]);
+      return result.affectedRows;
     } catch (err) {
       throw err;
     }
@@ -76,15 +82,11 @@ class Product {
 
   static async decreaseQuantity(id, quantity, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('id', sql.Int, id)
-        .input('quantity', sql.Int, quantity)
-        .input('UserID', sql.Int, userID)
-        .query('UPDATE products SET Cantidad = Cantidad - @quantity WHERE ID = @id AND UserID = @UserID');
-      return result.rowsAffected[0];
+      const [result] = await connection.execute('UPDATE products SET quantity = quantity - ? WHERE id = ? AND user_id = ?', [quantity, id, userID]);
+      return result.affectedRows[0];
     } catch (err) {
       throw err;
     }

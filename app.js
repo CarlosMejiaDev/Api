@@ -1,26 +1,36 @@
 const express = require('express');
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const providersRoutes = require('./routes/providers');
 const productsRoutes = require('./routes/products');
 const salesHistoryRoutes = require('./routes/sales_history');
 const membershipRoutes = require('./routes/memberships');
 const memberRoutes = require('./routes/members');
 const authRoutes = require('./routes/auth');
+const categoriesRoutes = require('./routes/categories');
 const { expressjwt: expressJwt } = require('express-jwt');
 const cors = require('cors');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const admin = require('firebase-admin');
+
+// Configura tus credenciales de Firebase
+var serviceAccount = require("./keyStorage.json");
+
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: "flowfitimagenes.appspot.com"
+    });
+}
 
 const config = {
-    user: 'administrador_carlos',
-    password: 'administrador',
-    server: 'flowfit.mssql.somee.com', 
-    database: 'flowfit',
-    options: {
-        encrypt: true,
-        trustServerCertificate: true
-    }
+    host: 'srv1224.hstgr.io',
+    user: 'u811511468_admin',
+    password: 'Fl0wf1t@base',
+    database: 'u811511468_flowfit',
 };
 
-sql.connect(config).then(() => {
+mysql.createConnection(config).then(() => {
     console.log('Conexión a la base de datos exitosa!');
 }).catch(err => {
     console.error('Error al conectar a la base de datos: ', err);
@@ -39,13 +49,39 @@ app.use(expressJwt({
     path: ['/auth/login', '/auth/register']
 }));
 
+// Configuración de Swagger
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: 'FlowFit API',
+      description: 'Documentación de la API de FlowFit',
+      contact: {
+        name: 'Soporte'
+      },
+      servers: ['http://localhost:3000']
+    },
+    securityDefinitions: {
+      Bearer: {
+        type: 'apiKey',
+        name: 'Authorization',
+        scheme: 'bearer',
+        in: 'header',
+      },
+    },
+  },
+  apis: ['./routes/*.js']
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 app.use('/providers', providersRoutes);
 app.use('/products', productsRoutes);
 app.use('/sales_history', salesHistoryRoutes);
 app.use('/memberships', membershipRoutes);
-app.use('/members', memberRoutes);
-app.use('/auth', authRoutes);
 
+app.use('/members', memberRoutes);app.use('/auth', authRoutes);
+app.use('/categories', categoriesRoutes);
 const port = 3000;
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

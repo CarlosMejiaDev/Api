@@ -1,18 +1,16 @@
 // models/sales_history.js
-
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const config = require('../dbconfig'); // Importa la configuración de la base de datos
 
 class SalesHistory {
   static async getAll(token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection({config});
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('UserID', sql.Int, userID)
-        .query('SELECT * FROM sales_history WHERE UserID = @UserID');
-      return result.recordset;
+      const [rows] = await connection.execute('SELECT * FROM sales_history WHERE UserID = ?', [userID]);
+      return rows;
     } catch (err) {
       throw err;
     }
@@ -20,15 +18,10 @@ class SalesHistory {
 
   static async create(sale, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection({config});
       const userID = jwt.verify(token, 'tu_secreto_jwt').id;
-      const result = await pool.request()
-        .input('ID_Producto', sql.Int, sale.ID_Producto)
-        .input('Cantidad', sql.Int, sale.Cantidad)
-        .input('PrecioVenta', sql.Decimal(10, 2), sale.PrecioVenta)
-        .input('UserID', sql.Int, userID)
-        .query('INSERT INTO sales_history (ID_Producto, Cantidad, PrecioVenta, UserID) VALUES (@ID_Producto, @Cantidad, @PrecioVenta, @UserID)');
-      return result.recordset;
+      const [result] = await connection.execute('INSERT INTO sales_history (ID_Producto, Cantidad, PrecioVenta, UserID) VALUES (?, ?, ?, ?)', [sale.ID_Producto, sale.Cantidad, sale.PrecioVenta, userID]);
+      return result;
     } catch (err) {
       throw err;
     }

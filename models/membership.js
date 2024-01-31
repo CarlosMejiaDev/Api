@@ -1,18 +1,17 @@
 // models/membership.js
 
-const sql = require('mssql');
+const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const config = require('../dbconfig');
 
 class Membership {
   static async getAll(token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('UserID', sql.Int, userID)
-        .query('SELECT * FROM memberships WHERE UserID = @UserID');
-      return result.recordset;
+      const [rows] = await connection.execute('SELECT * FROM memberships WHERE user_id = ?', [userID]);
+      return rows;
     } catch (err) {
       throw err;
     }
@@ -20,16 +19,11 @@ class Membership {
 
   static async create(membership, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('Titulo', sql.VarChar(255), membership.Titulo)
-        .input('Descripcion', sql.Text, membership.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .input('UserID', sql.Int, userID)
-        .query('INSERT INTO memberships (Titulo, Descripcion, Precio, UserID) VALUES (@Titulo, @Descripcion, @Precio, @UserID)');
-      return result.recordset;
+      const [result] = await connection.execute('INSERT INTO memberships (title, description, price, user_id) VALUES (?, ?, ?, ?)', [membership.title, membership.description, membership.price, userID]);
+      return result;
     } catch (err) {
       throw err;
     }
@@ -37,14 +31,11 @@ class Membership {
 
   static async delete(id, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('Id', sql.Int, id)
-        .input('UserID', sql.Int, userID)
-        .query('DELETE FROM memberships WHERE Id = @Id AND UserID = @UserID');
-      return result.rowsAffected;
+      const [result] = await connection.execute('DELETE FROM memberships WHERE id = ? AND user_id = ?', [id, userID]);
+      return result.affectedRows;
     } catch (err) {
       throw err;
     }
@@ -52,17 +43,11 @@ class Membership {
 
   static async update(id, membership, token) {
     try {
-      const pool = await sql.connect();
+      const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const result = await pool.request()
-        .input('Id', sql.Int, id)
-        .input('Titulo', sql.VarChar(255), membership.Titulo)
-        .input('Descripcion', sql.Text, membership.Descripcion)
-        .input('Precio', sql.Decimal(10, 2), membership.Precio)
-        .input('UserID', sql.Int, userID)
-        .query('UPDATE memberships SET Titulo = @Titulo, Descripcion = @Descripcion, Precio = @Precio WHERE Id = @Id AND UserID = @UserID');
-      return result.rowsAffected;
+      const [result] = await connection.execute('UPDATE memberships SET title = ?, description = ?, price = ? WHERE id = ? AND user_id = ?', [membership.title, membership.description, membership.price, id, userID]);
+      return result.affectedRows;
     } catch (err) {
       throw err;
     }
