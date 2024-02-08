@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Imagen del Producto</title>
+</head>
+<body>
+    <h1>Subir Imagen del Producto</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="name">Nombre:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+        <label for="description">Descripción:</label><br>
+        <input type="text" id="description" name="description" required><br><br>
+        <label for="price">Precio:</label><br>
+        <input type="number" id="price" name="price" required><br><br>
+        <label for="quantity">Cantidad:</label><br>
+        <input type="number" id="quantity" name="quantity" required><br><br>
+        <label for="category_id">ID de Categoría:</label><br>
+        <input type="number" id="category_id" name="category_id" required><br><br>
+        <label for="provider_id">ID de Proveedor:</label><br>
+        <input type="number" id="provider_id" name="provider_id" required><br><br>
+        <label for="image">Imagen:</label><br>
+        <input type="file" id="image" name="image_path" required accept="image/*"><br><br>
+        <input type="submit" value="Subir">
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+
+            try {
+                const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzA2NjY0ODkwLCJleHAiOjE3MDY2Njg0OTB9.gaaAmatUFfU9BCHIX47tnNRT40cx-o1kDPcgUJ4Dfb8';
+
+                const response = await fetch('http://localhost:3000/products', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('response').innerText = 'Ocurrió un error, por favor revisa la consola para más detalles.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
     const newSale = await SalesHistory.create(req.body, token);
-    await Product.decreaseQuantity(req.body.ID_Producto, req.body.Cantidad, token);
+    await Product.decreaseQuantity(req.body.product_id, req.body.quantity, token);
     res.status(201).json(newSale);
   } catch (err) {
     res.status(400).json({ message: err.message });
