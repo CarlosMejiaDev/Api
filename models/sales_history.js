@@ -8,8 +8,8 @@ class SalesHistory {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [rows] = await connection.execute('SELECT * FROM sales_history WHERE user_id = ?', [userID]);
+      const adminID = decoded.id;
+      const [rows] = await connection.execute('SELECT * FROM sales_history WHERE admin_id = ?', [adminID]);
       return rows;
     } catch (err) {
       throw err;
@@ -19,8 +19,8 @@ class SalesHistory {
   static async create(sale, token) {
     try {
       const connection = await mysql.createConnection(config);
-      const userID = jwt.verify(token, 'tu_secreto_jwt').id;
-      const [result] = await connection.execute('INSERT INTO sales_history (product_id, quantity, sale_price, user_id) VALUES (?, ?, ?, ?)', [sale.product_id, sale.quantity, sale.sale_price, userID]);
+      const adminID = jwt.verify(token, 'tu_secreto_jwt').id;
+      const [result] = await connection.execute('INSERT INTO sales_history (product_id, quantity, sale_price, admin_id) VALUES (?, ?, ?, ?)', [sale.product_id, sale.quantity, sale.sale_price, adminID]);
       return result;
     } catch (err) {
       throw err;

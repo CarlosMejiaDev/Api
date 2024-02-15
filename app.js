@@ -1,11 +1,17 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
+const workoutExercisesRoutes = require('./routes/workoutExercises');
 const providersRoutes = require('./routes/providers');
+const memberEntriesRoutes = require('./routes/member_entries');
 const productsRoutes = require('./routes/products');
 const salesHistoryRoutes = require('./routes/sales_history');
 const membershipRoutes = require('./routes/memberships');
 const memberRoutes = require('./routes/members');
+const qrCodesRoutes = require('./routes/qr_codes');
 const authRoutes = require('./routes/auth');
+const workoutsRoutes = require('./routes/workouts');
+const membershipSalesRoutes = require('./routes/membershipSales');
+const exercisesRoutes = require('./routes/exercises');
 const categoriesRoutes = require('./routes/categories');
 const { expressjwt: expressJwt } = require('express-jwt');
 const cors = require('cors');
@@ -74,14 +80,19 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
+app.use('/membership_sales', membershipSalesRoutes);
 app.use('/providers', providersRoutes);
 app.use('/products', productsRoutes);
+app.use('/workouts', workoutsRoutes);
 app.use('/sales_history', salesHistoryRoutes);
 app.use('/memberships', membershipRoutes);
-
+app.use('/exercises', exercisesRoutes);
 app.use('/members', memberRoutes);app.use('/auth', authRoutes);
 app.use('/categories', categoriesRoutes);
+app.use('/workout_exercises', workoutExercisesRoutes);
+app.use('/qr_codes', qrCodesRoutes);
+app.use('/member_entries', memberEntriesRoutes);
+
 const port = 3000;
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

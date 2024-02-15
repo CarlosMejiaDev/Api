@@ -10,7 +10,7 @@ class Membership {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const [rows] = await connection.execute('SELECT * FROM memberships WHERE user_id = ?', [userID]);
+      const [rows] = await connection.execute('SELECT * FROM memberships WHERE admin_id = ?', [userID]);
       return rows;
     } catch (err) {
       throw err;
@@ -22,7 +22,7 @@ class Membership {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const [result] = await connection.execute('INSERT INTO memberships (title, description, price, user_id) VALUES (?, ?, ?, ?)', [membership.title, membership.description, membership.price, userID]);
+      const [result] = await connection.execute('INSERT INTO memberships (title, description, price, admin_id) VALUES (?, ?, ?, ?)', [membership.title, membership.description, membership.price, userID]);
       return result;
     } catch (err) {
       throw err;
@@ -34,7 +34,7 @@ class Membership {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const [result] = await connection.execute('DELETE FROM memberships WHERE id = ? AND user_id = ?', [id, userID]);
+      const [result] = await connection.execute('DELETE FROM memberships WHERE id = ? AND admin_id = ?', [id, userID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
@@ -46,7 +46,7 @@ class Membership {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const userID = decoded.id;
-      const [result] = await connection.execute('UPDATE memberships SET title = ?, description = ?, price = ? WHERE id = ? AND user_id = ?', [membership.title, membership.description, membership.price, id, userID]);
+      const [result] = await connection.execute('UPDATE memberships SET title = ?, description = ?, price = ? WHERE id = ? AND admin_id = ?', [membership.title, membership.description, membership.price, id, userID]);
       return result.affectedRows;
     } catch (err) {
       throw err;

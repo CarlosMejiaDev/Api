@@ -18,13 +18,52 @@ if (admin.apps.length) {
     });
     bucket = admin.storage().bucket();
 }
+
 class Member {
+  static async findByUsername(username) {
+    try {
+      const connection = await mysql.createConnection(config);
+      const [rows] = await connection.execute('SELECT * FROM members WHERE username = ?', [username]);
+      return rows[0];
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async generateAuthToken(member, secret) {
+    const token = jwt.sign({ id: member.id }, secret, { expiresIn: '1h' });
+    return token;
+  }
+
+  static async login(username, password) {
+    try {
+      const connection = await mysql.createConnection(config);
+      const [rows] = await connection.execute('SELECT * FROM members WHERE username = ?', [username]);
+
+      if (rows.length === 0) {
+        throw new Error('Invalid username');
+      }
+
+      const member = rows[0];
+
+      // Verifica la contraseña
+      if (password !== member.password) {
+        throw new Error('Invalid password');
+      }
+
+      return member;
+    } catch (err) {
+      throw err;
+    }
+  }
+  // ...Continuación
+
   static async getAll(token) {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [rows] = await connection.execute('SELECT * FROM members WHERE user_id = ?', [userID]);
+      const adminID = decoded.id;
+      const [rows] = await connection.execute('SELECT * FROM members WHERE admin_id = ?', [adminID]);
       return rows;
     } catch (err) {
       throw err;
@@ -41,7 +80,7 @@ class Member {
   
       // Decode the JWT to get the user ID
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
+      const adminID = decoded.id;
   
       // Check if member.profile_picture and member.profile_picture.name are defined
       if (!member.profile_picture || !member.profile_picture.name) {
@@ -55,18 +94,19 @@ class Member {
       // Guarda la URL de la imagen en la base de datos
       member.profile_picture = `https://firebasestorage.googleapis.com/v0/b/flowfitimagenes.appspot.com/o/${encodeURIComponent(file.name)}?alt=media`;
   
-      const [result] = await connection.execute('INSERT INTO members (name, email, phone, assigned_membership, end_date, profile_picture, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)', [member.name, member.email, member.phone, member.assigned_membership, endDate, member.profile_picture, userID]);
+      const [result] = await connection.execute('INSERT INTO members (username, password, level, height, weight, muscle_mass, body_fat_percentage, name, email, phone, assigned_membership, registration_date, end_date, profile_picture, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [member.username, member.password, member.level, member.height, member.weight, member.muscle_mass, member.body_fat_percentage, member.name, member.email, member.phone, member.assigned_membership, new Date(), endDate, member.profile_picture, adminID]);
       return result;
     } catch (err) {
       throw err;
     }
   }
+
   static async delete(id, token) {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [result] = await connection.execute('DELETE FROM members WHERE id = ? AND user_id = ?', [id, userID]);
+      const adminID = decoded.id;
+      const [result] = await connection.execute('DELETE FROM members WHERE id = ? AND user_id = ?', [id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
@@ -77,8 +117,8 @@ class Member {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [result] = await connection.execute('UPDATE members SET name = ?, email = ?, phone = ?, assigned_membership = ?, profile_picture = ? WHERE id = ? AND user_id = ?', [member.name, member.email, member.phone, member.assigned_membership, member.profile_picture, id, userID]);
+      const adminID = decoded.id;
+      const [result] = await connection.execute('UPDATE members SET username = ?, password = ?, level = ?, height = ?, weight = ?, muscle_mass = ?, body_fat_percentage = ?, name = ?, email = ?, phone = ?, assigned_membership = ?, end_date = ?, profile_picture = ? WHERE id = ? AND user_id = ?', [member.username, member.password, member.level, member.height, member.weight, member.muscle_mass, member.body_fat_percentage, member.name, member.email, member.phone, member.assigned_membership, member.end_date, member.profile_picture, id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
@@ -86,5 +126,5 @@ class Member {
   }
 }
 
-
 module.exports = Member;
+  // Continúa en la siguiente parte...

@@ -18,13 +18,14 @@ if (admin.apps.length) {
     });
     bucket = admin.storage().bucket();
 }
+
 class Provider {
   static async getAll(token) {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [rows] = await connection.execute('SELECT * FROM providers WHERE user_id = ?', [userID]);
+      const adminID = decoded.id;
+      const [rows] = await connection.execute('SELECT * FROM providers WHERE admin_id = ?', [adminID]);
       return rows;
     } catch (err) {
       throw err;
@@ -35,7 +36,7 @@ class Provider {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
+      const adminID = decoded.id;
   
       // Sube la imagen al Firebase Storage
       const file = bucket.file(`provider_images/${provider.image_path.name}`);
@@ -44,7 +45,7 @@ class Provider {
       // Guarda la URL de la imagen en la base de datos
       provider.image_path = `https://firebasestorage.googleapis.com/v0/b/flowfitimagenes.appspot.com/o/${encodeURIComponent(file.name)}?alt=media`;
   
-      const [result] = await connection.execute('INSERT INTO providers (name, email, phone, address, user_id, image_path) VALUES (?, ?, ?, ?, ?, ?)', [provider.name, provider.email, provider.phone, provider.address, userID, provider.image_path]);
+      const [result] = await connection.execute('INSERT INTO providers (name, email, phone, address, admin_id, image_path) VALUES (?, ?, ?, ?, ?, ?)', [provider.name, provider.email, provider.phone, provider.address, adminID, provider.image_path]);
       return result;
     } catch (err) {
       throw err;
@@ -56,8 +57,8 @@ class Provider {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
-      const [result] = await connection.execute('DELETE FROM providers WHERE id = ? AND user_id = ?', [id, userID]);
+      const adminID = decoded.id;
+      const [result] = await connection.execute('DELETE FROM providers WHERE id = ? AND admin_id = ?', [id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
@@ -68,7 +69,7 @@ class Provider {
     try {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const userID = decoded.id;
+      const adminID = decoded.id;
 
       // Sube la imagen al Firebase Storage
       const file = bucket.file(`provider_images/${provider.image_path.name}`);
@@ -77,7 +78,7 @@ class Provider {
       // Guarda la URL de la imagen en la base de datos
       provider.image_path = `https://firebasestorage.googleapis.com/v0/b/flowfitimagenes.appspot.com/o/${encodeURIComponent(file.name)}?alt=media`;
 
-      const [result] = await connection.execute('UPDATE providers SET name = ?, email = ?, phone = ?, address = ?, image_path = ? WHERE id = ? AND user_id = ?', [provider.name, provider.email, provider.phone, provider.address, provider.image_path, id, userID]);
+      const [result] = await connection.execute('UPDATE providers SET name = ?, email = ?, phone = ?, address = ?, image_path = ? WHERE id = ? AND admin_id = ?', [provider.name, provider.email, provider.phone, provider.address, provider.image_path, id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;

@@ -4,6 +4,22 @@ const Member = require('../models/member');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const member = await Member.findByUsername(username);
+
+    if (!member || member.password !== password) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const token = await Member.generateAuthToken(member, 'tu_secreto_jwt');
+    res.json({ member, token });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
