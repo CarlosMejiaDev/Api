@@ -30,44 +30,31 @@ class Member {
     }
   }
 
-  static async generateAuthToken(member, secret) {
-    const token = jwt.sign({ id: member.id, role: member.role }, secret, { expiresIn: '1h' });
-    return token;
-  }
+
 
   static async login(username, password) {
     try {
       const connection = await mysql.createConnection(config);
       const [rows] = await connection.execute('SELECT * FROM members WHERE username = ?', [username]);
-
+  
       if (rows.length === 0) {
         throw new Error('Invalid username');
       }
-
+  
       const member = rows[0];
-
+  
       // Verifica la contraseña
       if (password !== member.password) {
         throw new Error('Invalid password');
       }
-
-      return member;
+  
+      // Genera un token para el miembro
+      const token = jwt.sign({ memberID: member.id, role: 'member' }, 'tu_secreto_jwt', { expiresIn: '1h' });  
+      return { member, token };
     } catch (err) {
       throw err;
     }
-  }
-
-  static async getAll(token) {
-    try {
-      const connection = await mysql.createConnection(config);
-      const decoded = jwt.verify(token, 'tu_secreto_jwt');
-      const adminID = decoded.id;
-      const [rows] = await connection.execute('SELECT * FROM members WHERE admin_id = ?', [adminID]);
-      return rows;
-    } catch (err) {
-      throw err;
-    }
-  }
+}
 
   static async create(member, token) {
     try {
@@ -111,7 +98,7 @@ class Member {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const adminID = decoded.id;
-      const [result] = await connection.execute('DELETE FROM members WHERE id = ? AND user_id = ?', [id, adminID]);
+      const [result] = await connection.execute('DELETE FROM members WHERE id = ? AND admin_id = ?', [id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
@@ -123,7 +110,7 @@ class Member {
       const connection = await mysql.createConnection(config);
       const decoded = jwt.verify(token, 'tu_secreto_jwt');
       const adminID = decoded.id;
-      const [result] = await connection.execute('UPDATE members SET username = ?, password = ?, level = ?, height = ?, weight = ?, muscle_mass = ?, body_fat_percentage = ?, name = ?, email = ?, phone = ?, assigned_membership = ?, end_date = ?, profile_picture = ? WHERE id = ? AND user_id = ?', [member.username, member.password, member.level, member.height, member.weight, member.muscle_mass, member.body_fat_percentage, member.name, member.email, member.phone, member.assigned_membership, member.end_date, member.profile_picture, id, adminID]);
+      const [result] = await connection.execute('UPDATE members SET username = ?, password = ?, level = ?, height = ?, weight = ?, muscle_mass = ?, body_fat_percentage = ?, name = ?, email = ?, phone = ?, assigned_membership = ?, end_date = ?, profile_picture = ? WHERE id = ? AND admin_id = ?', [member.username, member.password, member.level, member.height, member.weight, member.muscle_mass, member.body_fat_percentage, member.name, member.email, member.phone, member.assigned_membership, member.end_date, member.profile_picture, id, adminID]);
       return result.affectedRows;
     } catch (err) {
       throw err;
